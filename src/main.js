@@ -2,32 +2,67 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
 const $=id=>document.getElementById(id),canvas=$('world');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x91a7ad);scene.fog=new THREE.Fog(0x91a7ad,48,155);
-const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,130);camera.position.set(0,6.1,10.8);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xc28b65);scene.fog=new THREE.FogExp2(0x9c7966,.009);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,145);camera.position.set(0,6.1,10.8);
 // Graphics are permanently locked to the Super Smooth profile. No quality selector or user override is exposed.
-const GRAPHICS={pixelRatio:1.5,shadows:true,shadowMap:THREE.PCFSoftShadowMap,toneMapping:THREE.ACESFilmicToneMapping,exposure:1.05};
+const GRAPHICS={pixelRatio:1.15,shadows:true,shadowMap:THREE.PCFSoftShadowMap,toneMapping:THREE.ACESFilmicToneMapping,exposure:1.12};
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,GRAPHICS.pixelRatio));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=GRAPHICS.shadows;renderer.shadowMap.type=GRAPHICS.shadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=GRAPHICS.toneMapping;renderer.toneMappingExposure=GRAPHICS.exposure;renderer.setClearColor(0x91a7ad);
-scene.add(new THREE.HemisphereLight(0xc5d4d6,0x202a24,1.15));const sun=new THREE.DirectionalLight(0xffe0b2,2.0);sun.position.set(-14,28,12);sun.castShadow=true;sun.shadow.mapSize.set(1536,1536);sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-18;scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xf0d7c1,0x202820,1.25));const sun=new THREE.DirectionalLight(0xffc58a,2.15);sun.position.set(-14,28,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-14;scene.add(sun);
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
-const mats={ground:mat(0x18251d),path:mat(0x493b2c),stone:mat(0x777064),dark:mat(0x292a25),bark:mat(0x302017),leaf:mat(0x183626),leaf2:mat(0x304a30),gold:mat(0xb78a43,.42,.35),hero:mat(0x303d35),skin:mat(0x79553d),cloth:mat(0x202522),monster:mat(0x18271e),bridgeWood:mat(0x49301f,.88),bridgeEdge:mat(0x6b5135,.78),iron:mat(0x292e2d,.38,.78),rope:mat(0x6a5135),rock:mat(0x55564f),eye:new THREE.MeshBasicMaterial({color:0xffb34d})};
+const mats={ground:mat(0x18231d),path:mat(0x493b2c),stone:mat(0x777064),dark:mat(0x292a25),bark:mat(0x302017),leaf:mat(0x183626),leaf2:mat(0x304a30),gold:mat(0xb78a43,.42,.25),hero:mat(0x303d35),skin:mat(0x79553d),cloth:mat(0x202522),monster:mat(0x18271e),bridgeWood:mat(0x49301f,.88),bridgeEdge:mat(0x6b5135,.78),iron:mat(0x292e2d,.38,.45),rope:mat(0x6a5135),rock:mat(0x55564f),eye:new THREE.MeshBasicMaterial({color:0xffb34d}),stoneDeck:mat(0x77736b,.94),stoneDark:mat(0x514b43,.98),stoneCap:mat(0x92877a,.9)};
 const boxGeo=new THREE.BoxGeometry(1,1,1),sphereGeo=new THREE.SphereGeometry(1,16,12);
 function mesh(parent,geo,material,pos,scale,shadow=true){const o=new THREE.Mesh(geo,material);o.position.set(...pos);o.scale.set(...scale);o.castShadow=shadow;o.receiveShadow=true;parent.add(o);return o}
 function block(parent,material,x,y,z,sx,sy,sz){return mesh(parent,boxGeo,material,[x,y,z],[sx,sy,sz])}
 // Deep forest canyon far below the elevated bridge.
 const canyon=mesh(scene,new THREE.PlaneGeometry(260,260),mats.ground,[0,-42,-48],[1,1,1],false);canyon.rotation.x=-Math.PI/2;
-for(let side of [-1,1])for(let i=0;i<24;i++){const cliff=mesh(scene,new THREE.ConeGeometry(5+Math.random()*6,24+Math.random()*28,7),mats.rock,[side*(17+Math.random()*32),-20-Math.random()*8,-i*12-12],[1,1,1],false);cliff.rotation.z=(Math.random()-.5)*.22}
+for(let side of [-1,1])for(let i=0;i<12;i++){const cliff=mesh(scene,new THREE.ConeGeometry(5+Math.random()*6,24+Math.random()*28,7),mats.rock,[side*(17+Math.random()*32),-20-Math.random()*8,-i*12-12],[1,1,1],false);cliff.rotation.z=(Math.random()-.5)*.22}
 const road=new THREE.Group();scene.add(road);
 const lanes=[-2.25,0,2.25],segments=[];
 function tree(parent,x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);parent.add(g);mesh(g,new THREE.CylinderGeometry(.12,.32,4.8,9),mats.bark,[0,2.4,0],[1,1,1]);for(let i=0;i<8;i++){const a=i*2.4,r=.7+(i%3)*.4;mesh(g,sphereGeo,i%2?mats.leaf:mats.leaf2,[Math.cos(a)*r,3.7+(i%3)*.45,Math.sin(a)*r],[1.25,.8,1.1],false)}}
 function temple(parent){const g=new THREE.Group();g.position.set(0,0,-12);parent.add(g);block(g,mats.stone,0,1.1,0,7,2.2,4);block(g,mats.dark,0,1.1,-2.06,2.3,1.9,.12);for(const x of [-2.7,2.7]){mesh(g,new THREE.CylinderGeometry(.2,.3,2.6,12),mats.stone,[x,1.3,-1.6],[1,1,1]);}for(let i=0;i<5;i++){const roof=mesh(g,new THREE.CylinderGeometry(2.8-i*.38,3.3-i*.38,.28,4),i%2?mats.stone:mats.dark,[0,2.35+i*.25,-1],[1,1,1]);roof.rotation.y=Math.PI/4}}
 function segment(z,i){const g=new THREE.Group();g.position.z=z;road.add(g);
-// Elevated ancient bridge deck with individually visible weathered timber planks.
-block(g,mats.bridgeWood,0,-.18,-12,7.4,.42,27);for(let n=0;n<27;n++){block(g,(n%3===0)?mats.bridgeEdge:mats.bridgeWood,0,.055,-n-0.8,7.25,.12,.91);for(const x of [-3.3,3.3])block(g,mats.iron,x,.08,-n-.8,.055,.13,.86)}
-for(const side of [-1,1]){block(g,mats.bridgeEdge,side*3.72,.72,-12,.28,1.5,27);block(g,mats.iron,side*3.72,1.52,-12,.12,.12,27);for(let n=0;n<9;n++){const zz=-n*3.1-1;block(g,mats.bridgeEdge,side*3.72,.83,zz,.22,1.5,.24);block(g,mats.iron,side*3.72,1.62,zz,.17,.16,.2)}block(g,mats.iron,side*3.72,2.2,-12,.12,.12,27);
-// Massive suspension towers and diagonal support cables.
-for(const zz of [-2,-22]){block(g,mats.stone,side*3.72,3.5,zz,.48,7,.55);block(g,mats.stone,side*3.72,7,zz,.9,.42,1.1)}const cable=mesh(g,new THREE.CylinderGeometry(.045,.045,28,7),mats.iron,[side*3.72,3.5,-12],[1,1,1],false);cable.rotation.x=Math.PI/2;
-for(let n=0;n<6;n++)tree(g,side*(10+Math.random()*9),-n*5-2,.9+Math.random()*.7)}
-for(let n=0;n<13;n++)for(let l=0;l<3;l++)if(Math.random()>.12)block(g,(n+l)%4?mats.stone:mats.dark,lanes[l],.19,-n*2.1-1,2.18,.08,1.95);if(i%3===0)temple(g);return g}
+  // Ancient Temple Run-inspired stone causeway: broad fitted slabs, carved parapets and weathered stone posts.
+  block(g,mats.stoneDark,0,-.28,-12,7.65,.62,27);
+  const slabGeo=new THREE.BoxGeometry(2.38,.18,1.92);
+  const slabMats=[mats.stoneDeck,mats.stone,mats.stoneDark,mats.stoneCap];
+  for(let m=0;m<slabMats.length;m++){
+    const inst=new THREE.InstancedMesh(slabGeo,slabMats[m],45);
+    inst.castShadow=false;inst.receiveShadow=true;
+    const dummy=new THREE.Object3D();let k=0;
+    for(let n=0;n<15;n++)for(let lane=0;lane<3;lane++){
+      if((n+lane+m)%4===0)continue;
+      dummy.position.set(-2.42+lane*2.42,.12,-.9-n*1.78);
+      dummy.rotation.y=((n*7+lane*13+m*3)%9-4)*.012;
+      dummy.scale.set(.98+((n+lane)%3)*.008,1,.94+((n*2+lane)%3)*.02);
+      dummy.updateMatrix();inst.setMatrixAt(k++,dummy.matrix);
+    }
+    inst.count=k;g.add(inst);
+  }
+  for(const side of [-1,1]){
+    // Solid low parapet walls, built from repeated shared box geometry.
+    block(g,mats.stoneDark,side*3.72,.55,-12,.48,1.15,27);
+    const rail=new THREE.InstancedMesh(boxGeo,mats.stoneDeck,28);
+    const d=new THREE.Object3D();let k=0;
+    for(let n=0;n<14;n++){
+      d.position.set(side*3.72,.94,-1-n*1.92);d.scale.set(.56,.58,1.82);d.rotation.y=0;d.updateMatrix();rail.setMatrixAt(k++,d.matrix);
+    }
+    rail.count=k;rail.castShadow=false;rail.receiveShadow=true;g.add(rail);
+    // Wide coping stones and carved square balusters.
+    block(g,mats.stoneCap,side*3.72,1.18,-12,.66,.22,27);
+    for(const zz of [-3,-11,-19]){
+      block(g,mats.stone,side*3.72,1.12,zz,.78,.34,.88);
+      block(g,mats.stoneCap,side*3.72,1.34,zz,.92,.16,1.02);
+      block(g,mats.stoneDark,side*3.72,.32,zz,.9,.3,1.02);
+    }
+    // Low relief stone posts instead of suspension cables: no fragile high-poly bridge rig.
+    for(const zz of [-2,-22]){
+      block(g,mats.stoneDark,side*3.72,1.85,zz,.72,1.1,.82);
+      block(g,mats.stoneCap,side*3.72,2.43,zz,1.02,.22,1.12);
+    }
+    for(let n=0;n<3;n++)tree(g,side*(10+n*2.6),-n*8-3,.85+n*.08);
+  }
+  if(i%3===0)temple(g);
+  return g}
 for(let i=0;i<7;i++)segments.push(segment(-i*25,i));
 function heroModel(){const g=new THREE.Group();mesh(g,sphereGeo,mats.hero,[0,1.12,0],[.34,.48,.23]);mesh(g,sphereGeo,mats.skin,[0,1.78,-.01],[.21,.26,.19]);mesh(g,sphereGeo,mats.dark,[0,1.96,.02],[.22,.1,.2]);for(const x of [-.16,.16]){mesh(g,new THREE.CapsuleGeometry(.11,.38,4,8),mats.cloth,[x,.42,0],[1,1,1]);mesh(g,new THREE.CapsuleGeometry(.09,.35,4,8),mats.hero,[x*2,1.15,0],[1,1,1])}return g}
 let hero=heroModel();hero.position.set(0,.22,2.5);scene.add(hero);
